@@ -1,0 +1,1 @@
+Interpreted language with python like syntax with type checking
