@@ -1,1 +1,1 @@
-Interpreted language with python like syntax with type checking
+Interpreted language with python like syntax and type checking
