@@ -19,5 +19,9 @@ fn main() {
     std::env::set_var("RUST_LOG", "trace");
     env_logger::init();
 
-    let mut interpreter = Interpreter::run();
+    let args = Arguments::parse();
+
+    let mut source = std::fs::read_to_string(args.input_file).expect("Failed to open file");
+
+    let mut interpreter = Interpreter::run(source);
 }
