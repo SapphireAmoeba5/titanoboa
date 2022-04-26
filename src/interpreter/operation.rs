@@ -11,9 +11,9 @@ pub enum Operation {
     // The word "Const" refers to a constant value
     PushConst(Type),
 
-    AddConst(Type),
-    SubConst(Type),
-    MulConst(Type),
-    DivConst(Type),
-    ModConst(Type),
+    BinaryAdd,
+    BinarySub,
+    BinaryMul,
+    BinaryDiv,
+    BinaryMod,
 }

@@ -8,3 +8,11 @@ variable1 = variable0 + 1
 fn square(num) -> int begin
     return num * num
 end
+
+
+variable0 = 100
+if variable0 == 100 then
+    print("{}", variable0)
+
+end
+
