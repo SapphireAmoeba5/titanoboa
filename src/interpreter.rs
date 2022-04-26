@@ -192,7 +192,51 @@ pub fn test_from_main() {
     }
 }
 
-#[test]
-fn test_eval_operations() {
-    // TODO: Implement this test
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_eval_operations() {
+        // TODO: Implement this test
+    }
+
+    #[test]
+    fn test_binary_add() {
+        let mut inter = Interpreter {
+            stack: Vec::new(),
+            names: HashMap::new(),
+        };
+
+        let operations: Vec<Operation> = vec![
+            Operation::PushConst(Type::Int(5)),
+            Operation::PushConst(Type::Int(10)),
+            Operation::BinaryAdd,
+        ];
+
+        inter.eval_operations(operations, LineContext { line_number: 5 });
+
+        assert_eq!(*inter.stack.last().unwrap(), Type::Int(15));
+
+        let operations: Vec<Operation> = vec![
+            Operation::PushConst(Type::Int(10)),
+            Operation::PushConst(Type::Uint(15)),
+            Operation::BinaryAdd,
+        ];
+
+        inter.eval_operations(operations, LineContext { line_number: 5 });
+
+        assert_eq!(*inter.stack.last().unwrap(), Type::Uint(25));
+
+        // TODO: Fix test crashing here because of floating point rounding error
+        let operations: Vec<Operation> = vec![
+            Operation::PushConst(Type::F64(3.14)),
+            Operation::PushConst(Type::Int(2)),
+            Operation::BinaryAdd,
+        ];
+
+        inter.eval_operations(operations, LineContext { line_number: 5 });
+
+        assert_eq!(*inter.stack.last().unwrap(), Type::F64(5.14));
+    }
 }
