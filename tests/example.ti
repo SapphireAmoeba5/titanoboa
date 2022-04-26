@@ -4,8 +4,7 @@
 variable0 = 5
 variable1 = variable0 + 1
 
-[push_const(5),
- load_name("variable0"),
- push_name("variable0")m
- add_int(1),
- load_name("variable1")]
+// Function declaration (indentation is not necessary)
+fn square(num) -> int begin
+    return num * num
+end

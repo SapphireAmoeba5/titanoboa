@@ -1,3 +1,4 @@
+#[derive(Clone, Debug)]
 pub enum Type {
     Int(i64),
     Uint(u64),
