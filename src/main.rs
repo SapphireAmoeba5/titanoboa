@@ -1,7 +1,10 @@
 #[macro_use]
 extern crate log;
 
+mod interpreter;
+
 use clap::Parser;
+use interpreter::Interpreter;
 
 #[derive(Debug, Parser)]
 struct Arguments {
@@ -15,4 +18,6 @@ struct Arguments {
 fn main() {
     std::env::set_var("RUST_LOG", "trace");
     env_logger::init();
+
+    let mut interpreter = Interpreter::run();
 }
