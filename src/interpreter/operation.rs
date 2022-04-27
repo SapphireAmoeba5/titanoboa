@@ -23,6 +23,9 @@ pub enum Operation {
     ComparisonLess,
     ComparisonLessEqual,
 
+    JumpTrue(usize),
+    JumpFalse(usize),
+
     // This is implemented straight in the interpreter. It is planned that this will only be used for debug purposes and will be replaced by a standard library print function
     IntrinsicPrint,
 }
