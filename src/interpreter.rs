@@ -1,3 +1,5 @@
+mod token;
+mod parser;
 mod comments;
 mod linecontext;
 mod operation;
@@ -8,7 +10,7 @@ use linecontext::LineContext;
 use types::Type;
 
 use operation::Operation;
-use std::{collections::HashMap, num::IntErrorKind};
+use std::collections::HashMap;
 
 /// The main interpreter struct which contains the state of the interpreter
 pub struct Interpreter {
@@ -28,8 +30,10 @@ impl Interpreter {
         let operations: Vec<Operation> = vec![
             Operation::PushConst(Type::Int(5)),
             Operation::PushConst(Type::Int(6)),
-            Operation::ComparisonLess,
+            Operation::BinaryAdd,
             Operation::IntrinsicPrint,
+            Operation::PushConst(Type::Bool(true)),
+            Operation::JumpTrue(0),
         ];
         s.eval_operations(operations, LineContext { line_number: 5 });
         Ok(())
@@ -59,7 +63,7 @@ impl Interpreter {
             match operation {
                 Operation::StoreName(name) => self.store_name(name, line_context)?,
                 Operation::PushName(name) => self.push_name(name, line_context)?,
-                Operation::PushConst(cnst) => self.push_const(cnst)?,
+                Operation::PushConst(cnst) => self.push_const(cnst, line_context)?,
                 Operation::BinaryAdd => self.binary_add(line_context)?,
                 Operation::BinarySub => self.binary_sub(line_context)?,
                 Operation::BinaryMul => self.binary_mul(line_context)?,
@@ -131,7 +135,7 @@ impl Interpreter {
         }
     }
 
-    fn push_const(&mut self, value: &Type) -> Result<(), ()> {
+    fn push_const(&mut self, value: &Type, line_context: LineContext) -> Result<(), ()> {
         self.stack.push(value.clone());
         Ok(())
     }
@@ -146,7 +150,7 @@ impl Interpreter {
             Type::Int(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Int(left + right)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left as u64 + right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 + right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 + right)),
                 Type::Char(right) => self.stack.push(Type::Int(left + right as i64)),
                 _ => {
                     error!("Cannot add type Int with {:?}", right);
@@ -156,18 +160,18 @@ impl Interpreter {
             Type::Uint(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Uint(left + right as u64)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left + right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 + right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 + right)),
                 Type::Char(right) => self.stack.push(Type::Uint(left + right as u64)),
                 _ => {
                     error!("Cannot add type Uint with {:?}", right);
                     return Err(());
                 }
             },
-            Type::F64(left) => match right {
-                Type::Int(right) => self.stack.push(Type::F64(left + right as f64)),
-                Type::Uint(right) => self.stack.push(Type::F64(left + right as f64)),
-                Type::F64(right) => self.stack.push(Type::F64(left + right)),
-                Type::Char(right) => self.stack.push(Type::F64(left + right as f64)),
+            Type::Float(left) => match right {
+                Type::Int(right) => self.stack.push(Type::Float(left + right as f64)),
+                Type::Uint(right) => self.stack.push(Type::Float(left + right as f64)),
+                Type::Float(right) => self.stack.push(Type::Float(left + right)),
+                Type::Char(right) => self.stack.push(Type::Float(left + right as f64)),
                 _ => {
                     error!("Cannot add type F64 with {:?}", right);
                     return Err(());
@@ -176,7 +180,7 @@ impl Interpreter {
             Type::Char(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Int(left as i64 + right)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left as u64 + right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 + right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 + right)),
                 Type::Char(right) => self.stack.push(Type::Char(left + right)),
                 _ => {
                     error!("Cannot add type Char with {:?}", right);
@@ -202,7 +206,7 @@ impl Interpreter {
             Type::Int(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Int(left - right)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left as u64 - right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 - right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 - right)),
                 Type::Char(right) => self.stack.push(Type::Int(left - right as i64)),
                 _ => {
                     error!("Cannot subtract type Int with {:?}", right);
@@ -212,18 +216,18 @@ impl Interpreter {
             Type::Uint(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Uint(left - right as u64)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left - right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 - right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 - right)),
                 Type::Char(right) => self.stack.push(Type::Uint(left - right as u64)),
                 _ => {
                     error!("Cannot subtract type Uint with {:?}", right);
                     return Err(());
                 }
             },
-            Type::F64(left) => match right {
-                Type::Int(right) => self.stack.push(Type::F64(left - right as f64)),
-                Type::Uint(right) => self.stack.push(Type::F64(left - right as f64)),
-                Type::F64(right) => self.stack.push(Type::F64(left - right)),
-                Type::Char(right) => self.stack.push(Type::F64(left - right as f64)),
+            Type::Float(left) => match right {
+                Type::Int(right) => self.stack.push(Type::Float(left - right as f64)),
+                Type::Uint(right) => self.stack.push(Type::Float(left - right as f64)),
+                Type::Float(right) => self.stack.push(Type::Float(left - right)),
+                Type::Char(right) => self.stack.push(Type::Float(left - right as f64)),
                 _ => {
                     error!("Cannot subtract type F64 with {:?}", right);
                     return Err(());
@@ -232,7 +236,7 @@ impl Interpreter {
             Type::Char(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Int(left as i64 - right)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left as u64 - right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 - right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 - right)),
                 Type::Char(right) => self.stack.push(Type::Char(left - right)),
                 _ => {
                     error!("Cannot subtract type Char with {:?}", right);
@@ -258,7 +262,7 @@ impl Interpreter {
             Type::Int(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Int(left * right)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left as u64 * right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 * right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 * right)),
                 Type::Char(right) => self.stack.push(Type::Int(left * right as i64)),
                 _ => {
                     error!("Cannot multiply type Int with {:?}", right);
@@ -268,18 +272,18 @@ impl Interpreter {
             Type::Uint(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Uint(left * right as u64)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left * right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 * right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 * right)),
                 Type::Char(right) => self.stack.push(Type::Uint(left * right as u64)),
                 _ => {
                     error!("Cannot multiply type Uint with {:?}", right);
                     return Err(());
                 }
             },
-            Type::F64(left) => match right {
-                Type::Int(right) => self.stack.push(Type::F64(left * right as f64)),
-                Type::Uint(right) => self.stack.push(Type::F64(left * right as f64)),
-                Type::F64(right) => self.stack.push(Type::F64(left * right)),
-                Type::Char(right) => self.stack.push(Type::F64(left * right as f64)),
+            Type::Float(left) => match right {
+                Type::Int(right) => self.stack.push(Type::Float(left * right as f64)),
+                Type::Uint(right) => self.stack.push(Type::Float(left * right as f64)),
+                Type::Float(right) => self.stack.push(Type::Float(left * right)),
+                Type::Char(right) => self.stack.push(Type::Float(left * right as f64)),
                 _ => {
                     error!("Cannot multiply type F64 with {:?}", right);
                     return Err(());
@@ -288,7 +292,7 @@ impl Interpreter {
             Type::Char(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Int(left as i64 * right)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left as u64 * right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 * right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 * right)),
                 Type::Char(right) => self.stack.push(Type::Char(left * right)),
                 _ => {
                     error!("Cannot multiply type Char with {:?}", right);
@@ -314,7 +318,7 @@ impl Interpreter {
             Type::Int(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Int(left / right)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left as u64 / right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 / right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 / right)),
                 Type::Char(right) => self.stack.push(Type::Int(left / right as i64)),
                 _ => {
                     error!("Cannot divide type Int with {:?}", right);
@@ -324,18 +328,18 @@ impl Interpreter {
             Type::Uint(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Uint(left / right as u64)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left / right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 / right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 / right)),
                 Type::Char(right) => self.stack.push(Type::Uint(left / right as u64)),
                 _ => {
                     error!("Cannot divide type Uint with {:?}", right);
                     return Err(());
                 }
             },
-            Type::F64(left) => match right {
-                Type::Int(right) => self.stack.push(Type::F64(left / right as f64)),
-                Type::Uint(right) => self.stack.push(Type::F64(left / right as f64)),
-                Type::F64(right) => self.stack.push(Type::F64(left / right)),
-                Type::Char(right) => self.stack.push(Type::F64(left / right as f64)),
+            Type::Float(left) => match right {
+                Type::Int(right) => self.stack.push(Type::Float(left / right as f64)),
+                Type::Uint(right) => self.stack.push(Type::Float(left / right as f64)),
+                Type::Float(right) => self.stack.push(Type::Float(left / right)),
+                Type::Char(right) => self.stack.push(Type::Float(left / right as f64)),
                 _ => {
                     error!("Cannot divide type F64 with {:?}", right);
                     return Err(());
@@ -344,7 +348,7 @@ impl Interpreter {
             Type::Char(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Int(left as i64 / right)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left as u64 / right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 / right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 / right)),
                 Type::Char(right) => self.stack.push(Type::Char(left / right)),
                 _ => {
                     error!("Cannot divide type Char with {:?}", right);
@@ -370,7 +374,7 @@ impl Interpreter {
             Type::Int(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Int(left % right)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left as u64 % right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 % right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 % right)),
                 Type::Char(right) => self.stack.push(Type::Int(left % right as i64)),
                 _ => {
                     error!("Cannot mod type Int with {:?}", right);
@@ -380,18 +384,18 @@ impl Interpreter {
             Type::Uint(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Uint(left % right as u64)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left % right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 % right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 % right)),
                 Type::Char(right) => self.stack.push(Type::Uint(left % right as u64)),
                 _ => {
                     error!("Cannot mod type Uint with {:?}", right);
                     return Err(());
                 }
             },
-            Type::F64(left) => match right {
-                Type::Int(right) => self.stack.push(Type::F64(left % right as f64)),
-                Type::Uint(right) => self.stack.push(Type::F64(left % right as f64)),
-                Type::F64(right) => self.stack.push(Type::F64(left % right)),
-                Type::Char(right) => self.stack.push(Type::F64(left % right as f64)),
+            Type::Float(left) => match right {
+                Type::Int(right) => self.stack.push(Type::Float(left % right as f64)),
+                Type::Uint(right) => self.stack.push(Type::Float(left % right as f64)),
+                Type::Float(right) => self.stack.push(Type::Float(left % right)),
+                Type::Char(right) => self.stack.push(Type::Float(left % right as f64)),
                 _ => {
                     error!("Cannot mod type F64 with {:?}", right);
                     return Err(());
@@ -400,7 +404,7 @@ impl Interpreter {
             Type::Char(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Int(left as i64 % right)),
                 Type::Uint(right) => self.stack.push(Type::Uint(left as u64 % right)),
-                Type::F64(right) => self.stack.push(Type::F64(left as f64 % right)),
+                Type::Float(right) => self.stack.push(Type::Float(left as f64 % right)),
                 Type::Char(right) => self.stack.push(Type::Char(left % right)),
                 _ => {
                     error!("Cannot mod type Char with {:?}", right);
@@ -479,7 +483,7 @@ impl Interpreter {
         match condition {
             Type::Int(v) => result = v != 0,
             Type::Uint(v) => result = v != 0,
-            Type::F64(v) => result = v != 0.0,
+            Type::Float(v) => result = v != 0.0,
             Type::Bool(v) => result = v,
             Type::Char(v) => result = v != 0,
             Type::String(v) => result = !v.is_empty(),
@@ -501,7 +505,7 @@ impl Interpreter {
         match condition {
             Type::Int(v) => result = v != 0,
             Type::Uint(v) => result = v != 0,
-            Type::F64(v) => result = v != 0.0,
+            Type::Float(v) => result = v != 0.0,
             Type::Bool(v) => result = v,
             Type::Char(v) => result = v != 0,
             Type::String(v) => result = !v.is_empty(),
@@ -521,7 +525,7 @@ impl Interpreter {
         match value {
             Type::Int(v) => println!("{}", v),
             Type::Uint(v) => println!("{}", v),
-            Type::F64(v) => println!("{}", v),
+            Type::Float(v) => println!("{}", v),
             Type::Bool(v) => println!("{}", v),
             Type::Char(v) => println!("{}", v),
             Type::String(v) => println!("{}", v),
@@ -571,13 +575,13 @@ mod tests {
 
         let operations: Vec<Operation> = vec![
             Operation::PushConst(Type::Int(2)),
-            Operation::PushConst(Type::F64(3.5)),
+            Operation::PushConst(Type::Float(3.5)),
             Operation::BinaryAdd,
         ];
         inter
             .eval_operations(operations, LineContext { line_number: 5 })
             .unwrap();
-        assert_eq!(inter.stack.pop().unwrap(), Type::F64(5.5));
+        assert_eq!(inter.stack.pop().unwrap(), Type::Float(5.5));
 
         let operations: Vec<Operation> = vec![
             Operation::PushConst(Type::Int(100)),
