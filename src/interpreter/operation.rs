@@ -16,4 +16,13 @@ pub enum Operation {
     BinaryMul,
     BinaryDiv,
     BinaryMod,
+
+    ComparisonEq,
+    ComparisonGreater,
+    ComparisonGreaterEqual,
+    ComparisonLess,
+    ComparisonLessEqual,
+
+    // This is implemented straight in the interpreter. It is planned that this will only be used for debug purposes and will be replaced by a standard library print function
+    IntrinsicPrint,
 }

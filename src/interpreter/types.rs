@@ -6,4 +6,5 @@ pub enum Type {
     Bool(bool),
     Char(u8),
     String(String),
+    None,
 }

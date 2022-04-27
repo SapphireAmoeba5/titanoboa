@@ -1,18 +1,15 @@
-// This is a single line comment
+// This will not run yet. It is an example program to show how the syntax of this language will look
 
-// Variable's type is set at declaration
-variable0 = 5
-variable1 = variable0 + 1
-
-// Function declaration (indentation is not necessary)
-fn square(num) -> int begin
-    return num * num
+fn add(x: int, y: int) -> int begin
+    return x + y;
 end
 
+result = add(1, 2)
+print(result)
 
-variable0 = 100
-if variable0 == 100 then
-    print("{}", variable0)
-
+if result == 10 then
+    tmp = result * 10
+    print(tmp)
 end
 
+print(result)
