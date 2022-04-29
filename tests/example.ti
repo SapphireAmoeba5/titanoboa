@@ -1,15 +1,1 @@
-// This will not run yet. It is an example program to show how the syntax of this language will look
-
-fn add(x: int, y: int) -> int begin
-    return x + y;
-end
-
-result = add(1, 2)
-print(result)
-
-if result == 10 then
-    tmp = result * 10
-    print(tmp)
-end
-
-print(result)
+fn==fn

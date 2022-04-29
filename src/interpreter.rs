@@ -1,12 +1,11 @@
-mod token;
-mod parser;
-mod comments;
 mod linecontext;
 mod operation;
+mod parser;
+mod token;
 mod types;
 
-use comments::strip_comments;
 use linecontext::LineContext;
+use parser::Parser;
 use types::Type;
 
 use operation::Operation;
@@ -27,17 +26,13 @@ impl Interpreter {
             op_pointer: 0,
         };
 
-        let operations: Vec<Operation> = vec![
-            Operation::PushConst(Type::Int(5)),
-            Operation::PushConst(Type::Int(6)),
-            Operation::BinaryAdd,
-            Operation::IntrinsicPrint,
-            Operation::PushConst(Type::Bool(true)),
-            Operation::JumpTrue(0),
-        ];
-        s.eval_operations(operations, LineContext { line_number: 5 });
-        Ok(())
+        let tokens = Parser::run(source);
 
+        for token in tokens.raw().iter() {
+            println!("{:#?}", token);
+        }
+
+        Ok(())
         //s.eval(source)
     }
 
@@ -49,7 +44,6 @@ impl Interpreter {
     }
 
     fn eval_line(&mut self, line: &str, line_number: usize) -> Result<(), ()> {
-        let line = strip_comments(line);
         Ok(())
     }
 
@@ -145,7 +139,6 @@ impl Interpreter {
         // verified elsewhere.
         let left = self.stack.pop().unwrap();
         let right = self.stack.pop().unwrap();
-
         match left {
             Type::Int(left) => match right {
                 Type::Int(right) => self.stack.push(Type::Int(left + right)),
@@ -192,7 +185,6 @@ impl Interpreter {
                 return Err(());
             }
         }
-
         Ok(())
     }
 
@@ -547,6 +539,8 @@ mod tests {
 
     #[test]
     fn test_binary_add() {
+        simple_logger::init_with_level(log::Level::Trace);
+
         let mut inter = Interpreter {
             stack: Vec::new(),
             names: HashMap::new(),
@@ -563,6 +557,7 @@ mod tests {
             .unwrap();
         assert_eq!(inter.stack.pop().unwrap(), Type::Int(15));
 
+        inter.op_pointer = 0;
         let operations: Vec<Operation> = vec![
             Operation::PushConst(Type::Int(10)),
             Operation::PushConst(Type::Uint(15)),
@@ -573,6 +568,7 @@ mod tests {
             .unwrap();
         assert_eq!(inter.stack.pop().unwrap(), Type::Uint(25));
 
+        inter.op_pointer = 0;
         let operations: Vec<Operation> = vec![
             Operation::PushConst(Type::Int(2)),
             Operation::PushConst(Type::Float(3.5)),
@@ -583,6 +579,7 @@ mod tests {
             .unwrap();
         assert_eq!(inter.stack.pop().unwrap(), Type::Float(5.5));
 
+        inter.op_pointer = 0;
         let operations: Vec<Operation> = vec![
             Operation::PushConst(Type::Int(100)),
             Operation::PushConst(Type::Char('a' as u8)),

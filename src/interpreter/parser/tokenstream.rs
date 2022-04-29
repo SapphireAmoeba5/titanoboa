@@ -1,5 +1,5 @@
-use std::ops;
 use crate::interpreter::token::Token;
+use std::ops;
 
 #[derive(Debug, Clone)]
 pub struct TokenStream {
@@ -8,18 +8,71 @@ pub struct TokenStream {
 
 impl TokenStream {
     pub fn new() -> Self {
-        Self {
-            tokens: Vec::new(),
-        }
+        Self { tokens: Vec::new() }
     }
 
     pub fn push(&mut self, token: Token) {
         self.tokens.push(token);
     }
 
-    
+    /// Push a token as a string and automatically determine the kind of token it is
+    pub fn push_str(&mut self, token: &str, start: usize, end: usize, line: usize) {
+        if token.trim().is_empty() {
+            return;
+        }
+        let token = self.determine_token(token, start, end, line);
+        self.tokens.push(token);
+    }
+
+    pub fn len(&self) -> usize {
+        self.tokens.len()
+    }
+
     pub fn raw(&self) -> &[Token] {
         &self.tokens[..]
+    }
+}
+
+impl TokenStream {
+    fn determine_token(&self, token: &str, start: usize, end: usize, line: usize) -> Token {
+        match token {
+            "fn" => Token::Fn { line, start, end },
+            "->" => Token::Arrow { line, start, end },
+            "," => Token::Comma { line, start, end },
+            "." => Token::Period { line, start, end },
+            ":" => Token::Colon { line, start, end },
+            "=" => Token::Assignment { line, start, end },
+            "==" => Token::Equality { line, start, end },
+            "!=" => Token::EqualityNot { line, start, end },
+            ">" => Token::GreaterThan { line, start, end },
+            ">=" => Token::GreaterThanEqual { line, start, end },
+            "<" => Token::LessThan { line, start, end },
+            "<=" => Token::LessThanEqual { line, start, end },
+            "return" => Token::Return { line, start, end },
+            "int" => Token::Int { line, start, end },
+            "uint" => Token::Uint { line, start, end },
+            "float" => Token::Float { line, start, end },
+            "bool" => Token::Bool { line, start, end },
+            "char" => Token::Char { line, start, end },
+            "string" => Token::String { line, start, end },
+            "None" => Token::None { line, start, end },
+            "true" => Token::True { line, start, end },
+            "false" => Token::False { line, start, end },
+            "begin" => Token::Begin { line, start, end },
+            "then" => Token::Then { line, start, end },
+            "do" => Token::Do { line, start, end },
+            "end" => Token::End { line, start, end },
+            "(" => Token::OpeningBracket { line, start, end },
+            ")" => Token::ClosingBracket { line, start, end },
+            "\n" => Token::Newline { line, start, end },
+            // Parse the token type
+            _ => self.parse_token(token, start, end, line),
+        }
+    }
+
+    fn parse_token(&self, token: &str, start: usize, end: usize, line: usize) -> Token {
+        // TODO: Implement this function
+        Token::None { start, end, line }
     }
 }
 
