@@ -73,7 +73,7 @@ impl TokenBuilder {
             });
             self.line_count += 1;
             self.column_count = 0;
-        } else if ch.is_alphabetic() || ch.is_numeric() || ch == '_' {
+        } else if ch.is_alphanumeric() || ch == '_' {
             if self.mode == Mode::Symbol {
                 self.dump_buffer();
                 self.mode = Mode::Ascii;

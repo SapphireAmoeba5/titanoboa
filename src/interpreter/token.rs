@@ -218,6 +218,7 @@ pub enum Token {
         line: usize,
         start: usize,
         end: usize,
+        value: String,
     },
 
     Newline {

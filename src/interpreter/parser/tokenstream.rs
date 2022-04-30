@@ -1,5 +1,9 @@
+mod try_parse;
+
 use crate::interpreter::token::Token;
+use crate::interpreter::types::Type;
 use std::ops;
+use try_parse::try_parse_number;
 
 #[derive(Debug, Clone)]
 pub struct TokenStream {
@@ -17,7 +21,8 @@ impl TokenStream {
 
     /// Push a token as a string and automatically determine the kind of token it is
     pub fn push_str(&mut self, token: &str, start: usize, end: usize, line: usize) {
-        if token.trim().is_empty() {
+        // Return early if the token is only whitespace excluding a newline
+        if token != "\n" && token.trim().is_empty() {
             return;
         }
         let token = self.determine_token(token, start, end, line);
@@ -71,8 +76,53 @@ impl TokenStream {
     }
 
     fn parse_token(&self, token: &str, start: usize, end: usize, line: usize) -> Token {
-        // TODO: Implement this function
-        Token::None { start, end, line }
+        match try_parse_number(token) {
+            Some(Type::Int(int)) => {
+                return Token::IntegerLiteral {
+                    line,
+                    start,
+                    end,
+                    value: int,
+                }
+            }
+            Some(Type::Uint(uint)) => {
+                return Token::UIntegerLiteral {
+                    line,
+                    start,
+                    end,
+                    value: uint,
+                };
+            }
+            Some(Type::Float(float)) => {
+                return Token::FloatLiteral {
+                    line,
+                    start,
+                    end,
+                    value: float,
+                };
+            }
+            None => {}
+            _ => {
+                unreachable!()
+            }
+        }
+
+        // An identifier cannot begin with any kind of numeric ascii character
+        if !(token.as_bytes()[0] as char).is_numeric() {
+            return Token::Identifier {
+                line,
+                start,
+                end,
+                value: token.to_string(),
+            };
+        }
+
+        Token::Unknown {
+            line,
+            start,
+            end,
+            token: token.to_string(),
+        }
     }
 }
 
