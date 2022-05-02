@@ -28,12 +28,12 @@ impl TokenStream {
         let token = self.determine_token(token, start, end, line);
         self.tokens.push(token);
     }
+}
 
-    pub fn len(&self) -> usize {
-        self.tokens.len()
-    }
+impl ops::Deref for TokenStream {
+    type Target = [Token];
 
-    pub fn raw(&self) -> &[Token] {
+    fn deref(&self) -> &Self::Target {
         &self.tokens[..]
     }
 }

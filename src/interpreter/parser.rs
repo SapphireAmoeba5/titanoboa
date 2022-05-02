@@ -1,9 +1,14 @@
 mod comments;
+mod parsetree;
 mod tokenbuilder;
 mod tokenstream;
 
+use std::ops::Deref;
+
 use crate::interpreter::token::Token;
+use crate::interpreter::Type;
 use comments::strip_comments;
+use parsetree::*;
 use tokenbuilder::TokenBuilder;
 use tokenstream::TokenStream;
 pub struct Parser {}

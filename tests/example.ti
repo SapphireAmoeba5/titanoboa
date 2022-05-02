@@ -3,4 +3,4 @@ fn add(x: int, y: int) -> int begin
 end
 
 var = add(1, 2)
-var += 10
+var = var + 10

@@ -15,6 +15,15 @@ struct Arguments {
     output_file: Option<String>,
 }
 
+struct Test {
+    x: usize,
+    y: usize,
+}
+
+enum ETest {
+    T(Test),
+}
+
 fn main() {
     simple_logger::init_with_level(log::Level::Trace);
     let args = Arguments::parse();

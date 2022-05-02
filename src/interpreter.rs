@@ -28,7 +28,7 @@ impl Interpreter {
 
         let tokens = Parser::run(source);
 
-        for token in tokens.raw().iter() {
+        for token in tokens.iter() {
             println!("{:?}", token);
         }
 
